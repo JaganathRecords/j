@@ -1,4 +1,4 @@
-<!-- 履歴: A, B, C, D, E, F, G, H, I, J, K(Sa-Grama改称, Maラベル/太字/背景の最終厳密化) -->
+<!-- 履歴: A, B, C, D, E, F, G, H, I, J, K(Sa-Grama改称, Maラベル/太字/背景の最終厳密化), L(ES5化, グラフ背景固定, 実用セット改称) -->
 
 <!DOCTYPE html>
 
@@ -13,7 +13,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 
 
 /* 2ペイン構造 */
-.main-layout { display: flex; height: 100vh; width: 100vw; }
+.main-layout { display: flex; height: 100vh; width: 100%; }
 
 /* 左サイドバー：設定とグラフ（固定） */
 .sidebar {
@@ -114,43 +114,50 @@ svg { width: 100%; max-width: 280px; height: auto; filter: drop-shadow(0 2px 4px
 </div>
 
 <div class="graph-container">
-            <svg viewBox="-140 -140 280 280" id="graph"></svg>
-        </div>
-    </div>
+<svg viewBox="-140 -140 280 280" id="graph"></svg>
+</div>
+</div>
 </div>
 
 <!-- 右ペイン -->
+
 <div class="content">
-    <div class="card">
-        <h4>出力表</h4>
-        <table>
-            <thead><tr><th>Shruti</th><th>音名</th><th>Hz</th><th>Cent差（A440基）</th></tr></thead>
-            <tbody id="tbody"></tbody>
-        </table>
-    </div>
+<div class="card">
+<h4>出力表</h4>
+<table>
+<thead><tr><th>Shruti</th><th>音名</th><th>Hz</th><th>Cent差（A440基）</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
 
-    <div class="card">
-        <h4>比率参照表</h4>
-        <table style="font-size: 11px;">
-            <thead><tr><th>音名</th><th>比率</th><th>小数</th><th>算出Hz</th><th>平均律Hz</th><th>Cent差</th></tr></thead>
-            <tbody id="refTbody"></tbody>
-        </table>
-    </div>
+<div class="card">
+    <h4>比率参照表</h4>
+    <table style="font-size: 11px;">
+        <thead><tr><th>音名</th><th>比率</th><th>小数</th><th>算出Hz</th><th>平均律Hz</th><th>Cent差</th></tr></thead>
+        <tbody id="refTbody"></tbody>
+    </table>
+</div>
 
-    <div class="formula-box">
-        <strong>Cent差計算式:</strong><br>
-        1200 × log₂(算出Hz / 平均律Hz)<br>
-        ※平均律Hzは A=440Hz基準の12TET平均律算出値
-    </div>
+<div class="formula-box">
+    <strong>Cent差計算式:</strong><br>
+    1200 × log₂(算出Hz / 平均律Hz)<br>
+    ※平均律Hzは A=440Hz基準の12TET平均律算出値
+</div>
 </div>
 </div>
 
 <script>
-const notes =["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
-const blackKeyIndices = [1, 3, 6, 8, 10];
+// ES5互換性確保のため var を使用
+var notes =["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
+var blackKeyIndices = [1, 3, 6, 8, 10]; // 固定背景グレー用
+
+// Math.log2 のES5ポリフィル的処理
+function log2(val) {
+return Math.log(val) / Math.LN2;
+}
 
 // Dr. Oke理論値（分数）
-const shrutisSaData = [
+var shrutisSaData = [
 { n: "S", num: 1, den: 1 }, { n: "r1", num: 256, den: 243 }, { n: "r2", num: 16, den: 15 },
 { n: "R1", num: 10, den: 9 }, { n: "R2", num: 9, den: 8 }, { n: "g1", num: 32, den: 27 },
 { n: "g2", num: 6, den: 5 }, { n: "G1", num: 5, den: 4 }, { n: "G2", num: 81, den: 64 },
@@ -161,105 +168,127 @@ const shrutisSaData = [
 { n: "N2", num: 243, den: 128 }
 ];
 
-const shrutisMaData = [
+var shrutisMaData = [
 { n: "M1", num: 1, den: 1 }, { n: "m1", num: 256, den: 243 }, { n: "m2", num: 16, den: 15 },
 { n: "P1", num: 10, den: 9 }, { n: "P2", num: 9, den: 8 }, { n: "d1", num: 32, den: 27 },
 { n: "d2", num: 6, den: 5 }, { n: "D1", num: 5, den: 4 }, { n: "D2", num: 81, den: 64 },
 { n: "n1", num: 4, den: 3 }, { n: "n2", num: 27, den: 20 }, { n: "N1", num: 45, den: 32 },
 { n: "N2", num: 64, den: 45 }, { n: "S", num: 3, den: 2 }, { n: "r1", num: 128, den: 81 },
 { n: "r2", num: 8, den: 5 }, { n: "R1", num: 5, den: 3 }, { n: "R2", num: 27, den: 16 },
-{ n: "g1", num: 16, den: 9 }, { n: "g2", num: 9, den: 5 }, { n: "G1", num: 15, den: 8 },
+{ n: "g1", num: 16, den: 9 }, { n: "g2", num: 9, baseNum: 5, den: 5 }, { n: "G1", num: 15, den: 8 },
 { n: "G2", num: 243, den: 128 }
 ];
 
+// g2の誤字修正
+shrutisMaData[19] = { n: "g2", num: 9, den: 5 };
+
 function update() {
-const A = parseFloat(document.getElementById('baseA').value) || 440;
-const adj = parseFloat(document.getElementById('centAdj').value) || 0;
-const saIdx = parseInt(document.getElementById('saNote').value);
-const oct = parseInt(document.getElementById('octave').value);
-const mode = document.getElementById('grama').value;
+var A = parseFloat(document.getElementById('baseA').value) || 440;
+var adj = parseFloat(document.getElementById('centAdj').value) || 0;
+var saIdx = parseInt(document.getElementById('saNote').value);
+var oct = parseInt(document.getElementById('octave').value);
+var mode = document.getElementById('grama').value;
 
-const realA = A * Math.pow(2, adj / 1200);
-const saMidi = (oct + 1) * 12 + saIdx;
-const saHz = realA * Math.pow(2, (saMidi - 69) / 12);
+var realA = A * Math.pow(2, adj / 1200);
+var saMidi = (oct + 1) * 12 + saIdx;
+var saHz = realA * Math.pow(2, (saMidi - 69) / 12);
 
-const baseHz = (mode === "Ma") ? (saHz * (4/3)) : saHz;
-const sourceData = (mode === "Ma") ? JSON.parse(JSON.stringify(shrutisMaData)) : JSON.parse(JSON.stringify(shrutisSaData));
+var baseHz = (mode === "Ma") ? (saHz * (4/3)) : saHz;
+var sourceData = (mode === "Ma") ? JSON.parse(JSON.stringify(shrutisMaData)) : JSON.parse(JSON.stringify(shrutisSaData));
 
-let results = sourceData.map((s) => {
-const ratio = s.num / s.den;
-let hz = baseHz * ratio;
+var results = sourceData.map(function(s) {
+var ratio = s.num / s.den;
+var hz = baseHz * ratio;
 // Sa不動の原則に基づくオクターブ調整
 while (hz < saHz - 0.01) hz *= 2;
 while (hz >= saHz * 2 - 0.01) hz /= 2;
 
-const centFromSa = 1200 * Math.log2(hz / saHz);
-const absMidi = saMidi + (centFromSa / 100);
-const noteName = notes[Math.round(absMidi) % 12];
-const standardHz = 440 * Math.pow(2, (Math.round(absMidi) - 69) / 12);
-const centDiff = 1200 * Math.log2(hz / standardHz);
+var centFromSa = 1200 * log2(hz / saHz);
+var absMidi = saMidi + (centFromSa / 100);
+var noteName = notes[Math.round(absMidi) % 12];
+var standardHz = 440 * Math.pow(2, (Math.round(absMidi) - 69) / 12);
+var centDiff = 1200 * log2(hz / standardHz);
 
-return { ...s, hz, centFromSa, noteName, standardHz, centDiff, ratio };
+return {
+n: s.n,
+num: s.num,
+den: s.den,
+hz: hz,
+centFromSa: centFromSa,
+noteName: noteName,
+standardHz: standardHz,
+centDiff: centDiff,
+ratio: ratio
+};
 });
 
 // Sa基準で昇順ソート
-results.sort((a, b) => a.centFromSa - b.centFromSa);
+results.sort(function(a, b) { return a.centFromSa - b.centFromSa; });
 
-let currentBoldIndices = [];
+var currentBoldIndices = [];
 if (mode === "Ma") {
-// Ma-Grama ラベル物理マッピング修正
-results[9].n = "M"; // M1 -> M (Shuddha Ma)
-results[10].n = "m1"; // M2 -> m1 (Tivra Ma 1)
-results[11].n = "m2"; // m1 -> m2 (Tivra Ma 2)
-results[12].n = "P1"; // m2 -> P1 (Trishruti Pa)
-results[13].n = "P2"; // P -> P2 (Chatushruti Pa)
-// Ma-Grama 実戦セット: S(0), r1(1), R1(3), g1(5), G1(7), M(9), m1(10), P1(12), d1(14), D1(16), n1(18), N1(20)
+// Ma-Grama ラベル物理マッピング
+results[9].n = "M";
+results[10].n = "m1";
+results[11].n = "m2";
+results[12].n = "P1";
+results[13].n = "P2";
+// 実用セット
 currentBoldIndices = [0, 1, 3, 5, 7, 9, 10, 12, 14, 16, 18, 20];
 } else {
-// Sa-Grama 実戦セット: S(0), r1(1), R2(4), g1(5), G1(7), M1(9), m1(11), P(13), d1(14), D1(16), n1(18), N1(20)
+// Sa-Grama 実用セット
 currentBoldIndices = [0, 1, 4, 5, 7, 9, 11, 13, 14, 16, 18, 20];
 }
 
-let html = '', refHtml = '', svgHtml = '';
+var html = '', refHtml = '', svgHtml = '';
 
-// 背景円描画 (Sa=0度を真上にする)
-for(let i=0; i<12; i++) {
-const startRad = (i * 30) * Math.PI / 180;
-const endRad = ((i + 1) * 30) * Math.PI / 180;
-const x1 = 100 * Math.sin(startRad), y1 = -100 * Math.cos(startRad);
-const x2 = 100 * Math.sin(endRad), y2 = -100 * Math.cos(endRad);
-const isBlackKey = blackKeyIndices.includes((i + saIdx) % 12);
-svgHtml += `<path d="M 0 0 L ${x1} ${y1} A 100 100 0 0 1 ${x2} ${y2} Z" fill="${isBlackKey?'#f1f5f9':'#ffffff'}" stroke="#eee" />`;
-const midRad = (i * 30 + 15) * Math.PI / 180;
-svgHtml += `<text x="${75 * Math.sin(midRad)}" y="${-75 * Math.cos(midRad)}" fill="#cbd5e1" font-size="12" text-anchor="middle" dominant-baseline="central">${notes[(saIdx + i) % 12]}</text>`;
+// グラフ背景円描画 (Sa=頂点、グレー部分は固定)
+for(var i=0; i<12; i++) {
+var startRad = (i * 30) * Math.PI / 180;
+var endRad = ((i + 1) * 30) * Math.PI / 180;
+var x1 = 100 * Math.sin(startRad), y1 = -100 * Math.cos(startRad);
+var x2 = 100 * Math.sin(endRad), y2 = -100 * Math.cos(endRad);
+
+// 修正: 頂点から2,4,7,9,11番目(インデックス1,3,6,8,10)を常にグレーに固定
+var isGraySlice = (blackKeyIndices.indexOf(i) !== -1);
+var sliceColor = isGraySlice ? '#e2e8f0' : '#ffffff';
+
+svgHtml += '<path d="M 0 0 L ' + x1 + ' ' + y1 + ' A 100 100 0 0 1 ' + x2 + ' ' + y2 + ' Z" fill="' + sliceColor + '" stroke="#eee" />';
+
+var midRad = (i * 30 + 15) * Math.PI / 180;
+// 西洋音名は設定に合わせて入れ替わる
+svgHtml += '<text x="' + (75 * Math.sin(midRad)) + '" y="' + (-75 * Math.cos(midRad)) + '" fill="#2c3e50" font-size="12" text-anchor="middle" dominant-baseline="central">' + notes[(saIdx + i) % 12] + '</text>';
 }
 
-results.forEach((s, idx) => {
-const centDiffStr = (s.centDiff > 0 ? '+' : '') + s.centDiff.toFixed(1);
+results.forEach(function(s, idx) {
+var centDiffStr = (s.centDiff > 0 ? '+' : '') + s.centDiff.toFixed(1);
 
 // 背景グレー判定: 小文字(r,g,m,d,n)はKomal/Tivraとしてグレーにする
-const isGray = /^[rgmdn]/.test(s.n);
-const isBold = currentBoldIndices.includes(idx);
-const rowClass = (isGray ? 'gray-row ' : '') + (isBold ? 'bold-row' : '');
+var isGray = /^[rgmdn]/.test(s.n);
+var isBold = (currentBoldIndices.indexOf(idx) !== -1);
+var rowClass = (isGray ? 'gray-row ' : '') + (isBold ? 'bold-row' : '');
 
-html += `<tr class="${rowClass}"><td>${s.n}</td><td>${s.noteName}</td><td>${s.hz.toFixed(2)}</td><td>${centDiffStr}</td></tr>`;
+html += '<tr class="' + rowClass + '"><td>' + s.n + '</td><td>' + s.noteName + '</td><td>' + s.hz.toFixed(2) + '</td><td>' + centDiffStr + '</td></tr>';
 
-const rad = s.centFromSa * 0.3 * Math.PI / 180;
-const px = 100 * Math.sin(rad), py = -100 * Math.cos(rad);
-const color = isBold ? "var(--accent)" : "#94a3b8";
-svgHtml += `<line x1="0" y1="0" x2="${px}" y2="${py}" stroke="${color}" stroke-width="${isBold?2:0.5}" />`;
-svgHtml += `<circle cx="${px}" cy="${py}" r="${isBold?4:2}" fill="${color}"/>`;
-svgHtml += `<text x="${120 * Math.sin(rad)}" y="${-120 * Math.cos(rad)}" fill="${color}" font-size="${isBold?12:9}" font-weight="${isBold?'bold':'normal'}" text-anchor="middle" dominant-baseline="central">${s.n}</text>`;
+var rad = s.centFromSa * 0.3 * Math.PI / 180;
+var px = 100 * Math.sin(rad), py = -100 * Math.cos(rad);
+var color = isBold ? "var(--accent)" : "#94a3b8";
+svgHtml += '<line x1="0" y1="0" x2="' + px + '" y2="' + py + '" stroke="' + color + '" stroke-width="' + (isBold?2:0.5) + '" />';
+svgHtml += '<circle cx="' + px + '" cy="' + py + '" r="' + (isBold?4:2) + '" fill="' + color + '"/>';
+svgHtml += '<text x="' + (120 * Math.sin(rad)) + '" y="' + (-120 * Math.cos(rad)) + '" fill="' + (isBold ? "var(--accent)" : "#2c3e50") + '" font-size="' + (isBold?12:9) + '" font-weight="' + (isBold?'bold':'normal') + '" text-anchor="middle" dominant-baseline="central">' + s.n + '</text>';
 
-refHtml += `<tr class="${rowClass}"><td>${s.n}</td><td>${s.num}/${s.den}</td><td>${s.ratio.toFixed(4)}</td><td>${s.hz.toFixed(2)}</td><td>${s.standardHz.toFixed(2)}</td><td>${centDiffStr}</td></tr>`;
+refHtml += '<tr class="' + rowClass + '"><td>' + s.n + '</td><td>' + s.num + '/' + s.den + '</td><td>' + s.ratio.toFixed(4) + '</td><td>' + s.hz.toFixed(2) + '</td><td>' + s.standardHz.toFixed(2) + '</td><td>' + centDiffStr + '</td></tr>';
 });
 
 document.getElementById('tbody').innerHTML = html;
 document.getElementById('refTbody').innerHTML = refHtml;
-document.getElementById('graph').innerHTML = svgHtml + `<circle cx="0" cy="0" r="100" fill="none" stroke="#64748b" stroke-width="2"/>`;
+document.getElementById('graph').innerHTML = svgHtml + '<circle cx="0" cy="0" r="100" fill="none" stroke="#64748b" stroke-width="2"/>';
 }
 
-document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', update));
+var inputs = document.querySelectorAll('input, select');
+for (var j = 0; j < inputs.length; j++) {
+inputs[j].addEventListener('input', update);
+}
 update();
 </script>
 
