@@ -1,0 +1,372 @@
+<!-- 履歴: A...P, Q(Footer Text Updated, Row Border Removed, Header Renamed, Floating Opacity 35%) -->
+
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>22 Shrutis Calculator - Pro v5</title>
+<style>
+:root { --primary: #2c3e50; --accent: #312e81; --bg: #f4f4f7; --card: #ffffff; --gray: #e2e8f0; --sidebar-w: 400px; --selected-bg: #e0f2fe; --playing-bg: #fef3c7; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); color: var(--primary); font-size: 14px; overflow: hidden; }
+
+
+.main-layout { display: flex; height: 100vh; width: 100%; box-sizing: border-box; }
+.sidebar { width: var(--sidebar-w); background: var(--card); border-right: 1px solid #ddd; display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
+.sidebar-header { padding: 12px 20px; background: var(--primary); color: white; }
+.sidebar-header h3 { margin: 0; font-size: 18px; letter-spacing: 0.5px; }
+.sidebar-content { flex: 1; padding: 10px 15px; display: flex; flex-direction: column; overflow-y: auto; }
+.content { flex: 1; padding: 20px 20px 120px 20px; overflow-y: auto; background: var(--bg); }
+
+@media (max-width: 850px) {
+body { overflow: auto; }
+.main-layout { flex-direction: column; height: auto; }
+.sidebar { width: 100%; border-right: none; }
+.content { height: auto; overflow: visible; padding-bottom: 140px; }
+}
+
+.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+.input-group { margin-bottom: 6px; }
+label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #666; }
+input, select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
+
+.graph-container { flex: 1; min-height: 320px; position: relative; margin-top: 5px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+svg { width: 98%; height: 98%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+
+.card { background: var(--card); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 15px; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { border: 1px solid #eee; padding: 6px; text-align: center; }
+th { background: #f8fafc; position: sticky; top: -1px; z-index: 10; }
+
+.gray-row { background-color: var(--gray); }
+/* 実用セット：左端の線を廃止し、色をミッドナイト・インディゴに変更 */
+.bold-row { font-weight: bold; color: var(--accent); }
+.selected-row { background-color: var(--selected-bg) !important; }
+.playing-row { background-color: var(--playing-bg) !important; outline: 2px solid #f59e0b !important; z-index: 5; }
+
+/* フローティングバー: 透明度35% */
+.floating-bar {
+position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+width: 92%; max-width: 720px; height: 64px;
+background: rgba(15, 23, 42, 0.35); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+border-radius: 32px; display: flex; align-items: center; padding: 0 20px;
+z-index: 1000; justify-content: space-between;
+box-shadow: 0 8px 32px rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.1);
+}
+.play-btns { display: flex; gap: 6px; }
+.btn { padding: 8px 14px; border: none; border-radius: 18px; font-weight: bold; cursor: pointer; color: white; font-size: 11px; text-transform: uppercase; }
+.btn-play { background: #10b981; }
+.btn-stop { background: #ef4444; }
+.btn-clear { background: rgba(255,255,255,0.2); }
+
+.now-playing { font-size: 26px; font-weight: bold; color: #fbbf24; min-width: 70px; text-align: center; font-family: 'Georgia', serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.toggle-group { display: flex; gap: 12px; font-size: 9px; font-weight: bold; color: #cbd5e1; }
+.toggle-item { display: flex; align-items: center; gap: 4px; }
+
+.formula-box { font-size: 11px; color: #666; background: #eee; padding: 12px; border-radius: 4px; line-height: 1.5; border-left: 3px solid #ccc; }
+input[type="checkbox"] { transform: scale(1.2); cursor: pointer; }
+</style>
+
+</head>
+<body>
+
+<div class="main-layout">
+<div class="sidebar">
+<div class="sidebar-header"><h3>22 Shrutis Calculator</h3></div>
+<div class="sidebar-content">
+<div class="input-grid">
+<div class="input-group"><label>基準ピッチ(Hz)</label><input type="number" id="baseA" value="440" step="0.1"></div>
+<div class="input-group"><label>微調整(Cents)</label><input type="number" id="centAdj" value="0" step="1"></div>
+</div>
+<div class="input-grid">
+<div class="input-group"><label>オクターブ</label><input type="number" id="octave" value="4"></div>
+<div class="input-group"><label>テンポ (BPM)</label><input type="number" id="bpm" value="80"></div>
+</div>
+<div class="input-grid">
+<div class="input-group">
+<label>Sa ノート</label>
+<select id="saNote">
+<option value="0" selected>C</option><option value="1">D♭</option><option value="2">D</option>
+<option value="3">E♭</option><option value="4">E</option><option value="5">F</option>
+<option value="6">G♭</option><option value="7">G</option><option value="8">A♭</option>
+<option value="9">A</option><option value="10">B♭</option><option value="11">B</option>
+</select>
+</div>
+<div class="input-group">
+<label>Tuning Mode</label>
+<select id="grama">
+<option value="Sa">Sa-Grama (Pa-Tuning)</option>
+<option value="Ma">Ma-Grama (Ma-Tuning)</option>
+</select>
+</div>
+</div>
+<div class="graph-container">
+<svg viewBox="-140 -140 280 280" id="graph"></svg>
+</div>
+</div>
+</div>
+
+<div class="content">
+    <div class="card">
+        <h4>出力表</h4>
+        <table>
+            <thead><tr><th>Play</th><th>Shruti</th><th>音名</th><th>Hz</th><th>Cent差(A440基)</th></tr></thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+    <div class="card">
+        <h4>比率参照表</h4>
+        <table style="font-size: 11px;">
+            <thead><tr><th>Shruti</th><th>比率</th><th>小数</th><th>算出Hz</th><th>平均律Hz</th><th>Cent差(A440基)</th></tr></thead>
+            <tbody id="refTbody"></tbody>
+        </table>
+    </div>
+    <div class="formula-box">
+        Dr. Vidyadhar Okeの22shrutis理論に基づく<br>
+        <strong>Cent差計算式 :</strong><br>
+        1200 × log₂(算出Hz / (A=440Hz)平均律Hz)
+    </div>
+</div>
+</div>
+
+<div class="floating-bar">
+<div class="play-btns">
+<button class="btn btn-play" onclick="startSequence()">PLAY</button>
+<button class="btn btn-stop" onclick="stopSequence()">STOP</button>
+<button class="btn btn-clear" onclick="clearSelection()">CLEAR</button>
+</div>
+<div class="now-playing" id="display">--</div>
+<div class="toggle-group">
+<div class="toggle-item"><input type="checkbox" id="droneOn" checked><label>DRONE</label></div>
+<div class="toggle-item"><input type="checkbox" id="tetMode" onchange="update()"><label>12TET</label></div>
+<div class="toggle-item"><input type="checkbox" id="loopOn"><label>LOOP</label></div>
+</div>
+</div>
+
+<script>
+var notes = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
+var blackKeyIndices = [1, 3, 6, 8, 10];
+var currentResults = [];
+var selectedIndices = [];
+var audioCtx = null, droneOsc = null, droneGain = null, sequenceTimer = null, activeOsc = null, activeGain = null;
+
+function log2(val) { return Math.log(val) / Math.LN2; }
+
+var shrutisSaData = [
+{ n: "S", num: 1, den: 1 }, { n: "r1", num: 256, den: 243 }, { n: "r2", num: 16, den: 15 },
+{ n: "R1", num: 10, den: 9 }, { n: "R2", num: 9, den: 8 }, { n: "g1", num: 32, den: 27 },
+{ n: "g2", num: 6, den: 5 }, { n: "G1", num: 5, den: 4 }, { n: "G2", num: 81, den: 64 },
+{ n: "M1", num: 4, den: 3 }, { n: "M2", num: 27, den: 20 }, { n: "m1", num: 45, den: 32 },
+{ n: "m2", num: 64, den: 45 }, { n: "P", num: 3, den: 2 }, { n: "d1", num: 128, den: 81 },
+{ n: "d2", num: 8, den: 5 }, { n: "D1", num: 5, den: 3 }, { n: "D2", num: 27, den: 16 },
+{ n: "n1", num: 16, den: 9 }, { n: "n2", num: 9, den: 5 }, { n: "N1", num: 15, den: 8 },
+{ n: "N2", num: 243, den: 128 }
+];
+var shrutisMaData = [
+{ n: "M1", num: 1, den: 1 }, { n: "m1", num: 256, den: 243 }, { n: "m2", num: 16, den: 15 },
+{ n: "P1", num: 10, den: 9 }, { n: "P2", num: 9, den: 8 }, { n: "d1", num: 32, den: 27 },
+{ n: "d2", num: 6, den: 5 }, { n: "D1", num: 5, den: 4 }, { n: "D2", num: 81, den: 64 },
+{ n: "n1", num: 4, den: 3 }, { n: "n2", num: 27, den: 20 }, { n: "N1", num: 45, den: 32 },
+{ n: "N2", num: 64, den: 45 }, { n: "S", num: 3, den: 2 }, { n: "r1", num: 128, den: 81 },
+{ n: "r2", num: 8, den: 5 }, { n: "R1", num: 5, den: 3 }, { n: "R2", num: 27, den: 16 },
+{ n: "g1", num: 16, den: 9 }, { n: "g2", num: 9, den: 5 }, { n: "G1", num: 15, den: 8 },
+{ n: "G2", num: 243, den: 128 }
+];
+
+function initAudio() {
+if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function update() {
+var A = parseFloat(document.getElementById('baseA').value) || 440;
+var adj = parseFloat(document.getElementById('centAdj').value) || 0;
+var saIdx = parseInt(document.getElementById('saNote').value);
+var mode = document.getElementById('grama').value;
+var isTet = document.getElementById('tetMode').checked;
+
+var saHz = A * Math.pow(2, adj/1200) * Math.pow(2, (( (parseInt(document.getElementById('octave').value)+1)*12 + saIdx ) - 69) / 12);
+var baseHz = (mode === "Ma") ? (saHz * 4/3) : saHz;
+var sourceData = (mode === "Ma") ? JSON.parse(JSON.stringify(shrutisMaData)) : JSON.parse(JSON.stringify(shrutisSaData));
+
+currentResults = sourceData.map(function(s, idx) {
+var hz = baseHz * (s.num / s.den);
+while (hz < saHz - 0.01) hz *= 2;
+while (hz >= saHz * 2 - 0.01) hz /= 2;
+var cents = 1200 * log2(hz / saHz);
+var semitoneIdx = Math.round(cents/100);
+var stdHz = 440 * Math.pow(2, ( ( (parseInt(document.getElementById('octave').value)+1)*12 + saIdx + semitoneIdx ) - 69) / 12);
+return { n: s.n, hz: hz, cents: cents, note: notes[(saIdx + semitoneIdx)%12], stdHz: stdHz, ratio: s.num/s.den, num: s.num, den: s.den, semitoneIdx: semitoneIdx, isBold: false };
+});
+currentResults.sort(function(a, b) { return a.cents - b.cents; });
+
+var boldSet = (mode === "Ma") ? [0, 1, 3, 5, 7, 9, 10, 12, 14, 16, 18, 20] : [0, 1, 4, 5, 7, 9, 11, 13, 14, 16, 18, 20];
+if (mode === "Ma") {
+currentResults[9].n = "M"; currentResults[10].n = "m1"; currentResults[11].n = "m2"; currentResults[12].n = "P1"; currentResults[13].n = "P2";
+}
+for(var k=0; k<boldSet.length; k++) { currentResults[boldSet[k]].isBold = true; }
+
+render(saIdx, isTet);
+}
+
+function render(saIdx, isTet) {
+var html = '', refHtml = '', svgHtml = '';
+for(var i=0; i<12; i++) {
+var r1 = (i*30)*Math.PI/180, r2 = ((i+1)*30)*Math.PI/180;
+var sliceColor = (blackKeyIndices.indexOf(i) !== -1) ? '#e2e8f0' : '#ffffff';
+svgHtml += '<path d="M 0 0 L '+(100*Math.sin(r1))+' '+(-100*Math.cos(r1))+' A 100 100 0 0 1 '+(100*Math.sin(r2))+' '+(-100*Math.cos(r2))+' Z" fill="'+sliceColor+'" stroke="#eee" />';
+svgHtml += '<text x="'+(82*Math.sin(r1+15*Math.PI/180))+'" y="'+(-82*Math.cos(r1+15*Math.PI/180))+'" fill="#94a3b8" font-size="9" text-anchor="middle">'+notes[(saIdx+i)%12]+'</text>';
+}
+
+currentResults.forEach(function(s, idx) {
+var isSelected = (selectedIndices.indexOf(idx) !== -1);
+var baseClass = (s.isBold ? 'bold-row ' : '') + (/^[rgmdn]/.test(s.n) ? 'gray-row ' : '');
+var finalClass = baseClass + (isSelected ? 'selected-row' : '');
+var centDiff = 1200 * log2(s.hz / s.stdHz);
+
+html += '<tr id="row-'+idx+'" class="'+finalClass+'" data-base-class="'+baseClass+'"><td><input type="checkbox" onchange="toggleSelect('+idx+')" '+(isSelected?'checked':'')+'></td><td onclick="playSingle('+idx+')">'+s.n+'</td><td>'+s.note+'</td><td>'+s.hz.toFixed(2)+'</td><td>'+(centDiff > 0 ? '+' : '') + centDiff.toFixed(1)+'</td></tr>';
+
+var angle = (isTet ? s.semitoneIdx * 100 : s.cents) * 0.3 * Math.PI / 180;
+var px = 100 * Math.sin(angle), py = -100 * Math.cos(angle);
+var color = s.isBold ? "var(--accent)" : "#64748b";
+svgHtml += '<line x1="0" y1="0" x2="'+px+'" y2="'+py+'" stroke="'+color+'" stroke-width="'+(s.isBold?1.2:0.5)+'" opacity="0.6" />';
+if(isSelected) svgHtml += '<circle cx="'+px+'" cy="'+py+'" r="7" fill="none" stroke="#3b82f6" stroke-width="1.5" />';
+svgHtml += '<circle id="dot-'+idx+'" cx="'+px+'" cy="'+py+'" r="'+(s.isBold?3.5:2)+'" fill="'+color+'"/>';
+svgHtml += '<text x="'+(122*Math.sin(angle))+'" y="'+(-122*Math.cos(angle))+'" fill="'+color+'" font-size="'+(s.isBold?11:8)+'" font-weight="'+(s.isBold?'bold':'normal')+'" text-anchor="middle" dominant-baseline="central">'+s.n+'</text>';
+
+refHtml += '<tr class="'+finalClass+'"><td>'+s.n+'</td><td>'+s.num+'/'+s.den+'</td><td>'+s.ratio.toFixed(4)+'</td><td>'+s.hz.toFixed(2)+'</td><td>'+s.stdHz.toFixed(2)+'</td><td>'+centDiff.toFixed(1)+'</td></tr>';
+});
+document.getElementById('tbody').innerHTML = html;
+document.getElementById('refTbody').innerHTML = refHtml;
+document.getElementById('graph').innerHTML = svgHtml + '<circle cx="0" cy="0" r="100" fill="none" stroke="#64748b" stroke-width="1.5"/>';
+}
+
+function toggleSelect(idx) {
+initAudio();
+var mode = document.getElementById('grama').value;
+var groups = (mode === "Ma") ?
+[[0],[1,2],[3,4],[5,6],[7,8],[9],[10,11],[12,13],[14,15],[16,17],[18,19],[20,21]] :
+[[0],[1,2],[3,4],[5,6],[7,8],[9,10],[11,12],[13],[14,15],[16,17],[18,19],[20,21]];
+var targetGroup = null;
+for(var i=0; i<groups.length; i++) { if(groups[i].indexOf(idx) !== -1) { targetGroup = groups[i]; break; } }
+
+var existingIdx = selectedIndices.indexOf(idx);
+if(existingIdx !== -1) {
+selectedIndices.splice(existingIdx, 1);
+} else {
+if(targetGroup) {
+for(var j=0; j<targetGroup.length; j++) {
+var pos = selectedIndices.indexOf(targetGroup[j]);
+if(pos !== -1) selectedIndices.splice(pos, 1);
+}
+}
+selectedIndices.push(idx);
+}
+selectedIndices.sort(function(a,b){return a-b;});
+update();
+}
+
+function clearSelection() { selectedIndices = []; update(); }
+
+function playSound(freq, duration) {
+if (!audioCtx) return;
+if (activeOsc) { try { activeOsc.stop(); } catch(e){} }
+var osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+osc.type = 'triangle';
+osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+g.gain.setValueAtTime(0, audioCtx.currentTime);
+g.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.05);
+g.gain.setValueAtTime(0.4, audioCtx.currentTime + duration - 0.1);
+g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+osc.connect(g); g.connect(audioCtx.destination);
+osc.start(); osc.stop(audioCtx.currentTime + duration);
+activeOsc = osc; activeGain = g;
+}
+
+function startDrone() {
+if (!document.getElementById('droneOn').checked) return;
+stopDrone();
+var mode = document.getElementById('grama').value;
+var f = (mode === "Ma") ? currentResults[0].hz * 4/3 : currentResults[0].hz;
+droneOsc = audioCtx.createOscillator(); droneGain = audioCtx.createGain();
+var filter = audioCtx.createBiquadFilter();
+droneOsc.type = 'sawtooth'; droneOsc.frequency.value = f / 2;
+filter.type = 'lowpass'; filter.frequency.value = 300;
+droneGain.gain.value = 0.12;
+droneOsc.connect(filter); filter.connect(droneGain); droneGain.connect(audioCtx.destination);
+droneOsc.start();
+}
+
+function stopDrone() { if(droneOsc) { droneOsc.stop(); droneOsc = null; } }
+
+function playSingle(idx) {
+initAudio();
+var s = currentResults[idx];
+var f = document.getElementById('tetMode').checked ? currentResults[0].hz * Math.pow(2, s.semitoneIdx/12) : s.hz;
+playSound(f, 1.0);
+highlight(idx);
+setTimeout(function(){ highlight(-1); }, 1000);
+}
+
+function highlight(idx) {
+var targetIdx = (idx === -99) ? 0 : idx;
+var isTet = document.getElementById('tetMode').checked;
+for(var i=0; i<currentResults.length; i++) {
+var r = document.getElementById('row-'+i), d = document.getElementById('dot-'+i);
+if(!r || !d) continue;
+var isSelected = (selectedIndices.indexOf(i) !== -1);
+var baseClass = r.getAttribute('data-base-class') || "";
+r.className = baseClass + (isSelected ? "selected-row" : "");
+if(i === targetIdx && idx !== -1) {
+r.className += " playing-row";
+d.setAttribute("r", "9");
+d.setAttribute("fill", "#f59e0b");
+var label = (idx === -99) ? "S^" : currentResults[i].n;
+if(isTet && label !== "S^") { label = label.replace(/[0-9]/g, ''); }
+document.getElementById('display').innerText = label;
+} else {
+d.setAttribute("r", currentResults[i].isBold ? "3.5" : "2");
+d.setAttribute("fill", currentResults[i].isBold ? "var(--accent)" : "#64748b");
+}
+}
+if(idx === -1) document.getElementById('display').innerText = "--";
+}
+
+function startSequence() {
+initAudio(); if(selectedIndices.length === 0) return;
+stopSequence(); startDrone();
+var seq = [].concat(selectedIndices);
+seq.push(-99); seq.push(-99);
+for(var i=selectedIndices.length-1; i>=0; i--) seq.push(selectedIndices[i]);
+var step = 0;
+function next() {
+var loopOn = document.getElementById('loopOn').checked;
+if(step >= seq.length) {
+if(loopOn) { step = 0; } else { stopSequence(); return; }
+}
+var bpm = parseFloat(document.getElementById('bpm').value) || 80;
+var interval = 60000 / bpm;
+var idx = seq[step], f;
+if(idx === -99) { f = currentResults[0].hz * 2; highlight(-99); }
+else {
+var s = currentResults[idx];
+f = document.getElementById('tetMode').checked ? currentResults[0].hz * Math.pow(2, s.semitoneIdx/12) : s.hz;
+highlight(idx);
+}
+playSound(f, interval/1000);
+step++;
+sequenceTimer = setTimeout(next, interval);
+}
+next();
+}
+
+function stopSequence() { clearTimeout(sequenceTimer); if(activeOsc) activeOsc.stop(); stopDrone(); highlight(-1); }
+
+var inputs = document.querySelectorAll('input, select');
+for (var k = 0; k < inputs.length; k++) { inputs[k].addEventListener('change', update); }
+update();
+</script>
+
+</body>
+</html>
