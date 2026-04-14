@@ -1,4 +1,4 @@
-<!-- 履歴: A...Q, R(PC Gap Fix, Mobile Scroll Fix, Selection Color Sync, Graph inside Toggle, PWA Support) -->
+<!-- 履歴: A...Q, R(PC Layout Fix, Mobile Graph in Header, Drone Vol 3.5, PWA Meta, Sequence Highlight) -->
 
 <!DOCTYPE html>
 
@@ -6,88 +6,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>22 Shrutis - Map & Sound</title>
+
+<!-- PWA対応メタタグ -->
+
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>22 Shrutis Calculator</title>
-<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="22 Shrutis">
+<meta name="theme-color" content="#2c3e50">
+
 <style>
-:root { --primary: #2c3e50; --accent: #312e81; --bg: #f4f4f7; --card: #ffffff; --gray: #e2e8f0; --sidebar-w: 400px; --selected-bg: #e0f2fe; --selected-line: #3b82f6; --playing-bg: #fef3c7; }
+:root { --primary: #2c3e50; --accent: #312e81; --bg: #f4f4f7; --card: #ffffff; --gray: #e2e8f0; --sidebar-w: 400px; --selected-bg: #e0f2fe; --playing-bg: #fef3c7; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); color: var(--primary); font-size: 14px; overflow: hidden; -webkit-tap-highlight-color: transparent; }
 
-
+/* PCレイアウト */
 .main-layout { display: flex; height: 100vh; width: 100%; box-sizing: border-box; }
 .sidebar { width: var(--sidebar-w); background: var(--card); border-right: 1px solid #ddd; display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
-.sidebar-header { padding: 12px 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+.sidebar-header { padding: 12px 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
 .sidebar-header h3 { margin: 0; font-size: 18px; letter-spacing: 0.5px; }
 
-/* PC用：設定項目の隙間を詰める */
-.sidebar-content { flex: none; padding: 10px 15px; display: flex; flex-direction: column; overflow-y: auto; }
+/* PC表示時の設定変更指示反映 */
+.sidebar-content { padding: 10px 15px; display: flex; flex-direction: column; overflow-y: auto; flex: none; }
+.graph-container { background: #fff; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #eee; margin-top: 0px; flex: none; height: 320px; }
+svg { width: 95%; height: 95%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+
 .content { flex: 1; padding: 20px 20px 120px 20px; overflow-y: auto; background: var(--bg); }
 
-/* モバイル向け折り畳みボタン */
-#mobile-toggle { display: none; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+/* モバイル対応 (iPhone 6s Plus等) */
+#mobile-toggle { display: none; background: rgba(255,255,255,0.2); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; }
 
 @media (max-width: 850px) {
 body { overflow: auto; }
 .main-layout { flex-direction: column; height: auto; }
-.sidebar { width: 100%; border-right: none; height: auto; position: sticky; top: 0; z-index: 2000; }
-/* スマホ時：設定とグラフをひとまとめに隠す */
-.sidebar-content { display: none; padding: 10px; border-bottom: 1px solid #ddd; }
+.sidebar { width: 100%; border-right: none; height: auto; position: sticky; top: 0; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+/* グラフをタイトルバー（ヘッダー下）に埋め込み、設定とは分離 */
+.graph-container { height: 220px; border-bottom: 1px solid #ddd; }
+.sidebar-content { display: none; background: #fff; }
 .sidebar-content.active { display: flex; }
 #mobile-toggle { display: block; }
-.content { height: auto; overflow: visible; padding: 10px 10px 140px 10px; width: 100%; box-sizing: border-box; }
+
+.content { height: auto; overflow: visible; padding: 10px 5px 140px 5px; }
+.card { padding: 10px; margin-bottom: 15px; width: 100%; box-sizing: border-box; overflow-x: auto; }
+table { width: 100%; min-width: 350px; } /* iPhone幅に合わせる */
 }
 
+/* 入力グリッド */
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
 .input-group { margin-bottom: 6px; }
-label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #666; }
+label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 2px; color: #666; }
 input, select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
 
-/* グラフ：PC時は隙間なし */
-.graph-container { flex: none; min-height: 320px; position: relative; margin-top: 0px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-svg { width: 98%; height: 98%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-
-.card { background: var(--card); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 15px; margin-bottom: 20px; }
-/* 参照表の横揺れ防止 */
-.table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 450px; }
+/* 表スタイル */
 th, td { border: 1px solid #eee; padding: 6px; text-align: center; }
 th { background: #f8fafc; position: sticky; top: -1px; z-index: 10; }
-
 .gray-row { background-color: var(--gray); }
 .bold-row { font-weight: bold; color: var(--accent); }
 .selected-row { background-color: var(--selected-bg) !important; }
 .playing-row { background-color: var(--playing-bg) !important; outline: 2px solid #f59e0b !important; z-index: 5; }
 
-/* 操作バー: 透明度35% & スマホ最適化 */
+/* フローティングバー: 透明度35% */
 .floating-bar {
 position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-width: 95%; max-width: 700px; height: 64px;
+width: 95%; max-width: 650px; height: 64px;
 background: rgba(15, 23, 42, 0.35); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-border-radius: 32px; display: flex; align-items: center; padding: 0 15px;
+border-radius: 32px; display: flex; align-items: center; padding: 0 20px;
 z-index: 3000; justify-content: space-between;
 box-shadow: 0 8px 32px rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.1);
 box-sizing: border-box;
 }
-.play-btns { display: flex; gap: 4px; flex-shrink: 0; }
-.btn { padding: 8px 10px; border: none; border-radius: 18px; font-weight: bold; cursor: pointer; color: white; font-size: 10px; text-transform: uppercase; white-space: nowrap; }
+.play-btns { display: flex; gap: 4px; }
+.btn { padding: 8px 12px; border: none; border-radius: 18px; font-weight: bold; cursor: pointer; color: white; font-size: 11px; text-transform: uppercase; }
 .btn-play { background: #10b981; }
 .btn-stop { background: #ef4444; }
 .btn-clear { background: rgba(255,255,255,0.2); }
 
-.now-playing { font-size: 24px; font-weight: bold; color: #fbbf24; min-width: 40px; text-align: center; font-family: 'Georgia', serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5); flex: 1; }
-.toggle-group { display: flex; gap: 6px; font-size: 8px; font-weight: bold; color: #cbd5e1; flex-shrink: 0; }
-.toggle-item { display: flex; align-items: center; gap: 2px; }
+.now-playing { font-size: 26px; font-weight: bold; color: #fbbf24; min-width: 50px; text-align: center; font-family: 'Georgia', serif; flex: 1; }
+.toggle-group { display: flex; gap: 10px; font-size: 9px; font-weight: bold; }
+.toggle-item { display: flex; align-items: center; gap: 3px; }
 
+/* iPhone 縦向き表示でのフローティングUI最適化（2段組み） */
 @media (max-width: 480px) {
-.floating-bar { height: 56px; padding: 0 10px; bottom: 10px; border-radius: 28px; }
-.btn { padding: 6px 8px; font-size: 9px; }
-.now-playing { font-size: 20px; }
-.toggle-group { gap: 4px; }
+.floating-bar { height: auto; min-height: 80px; padding: 10px 15px; flex-direction: column; border-radius: 20px; bottom: 10px; }
+.play-btns { width: 100%; justify-content: center; margin-bottom: 5px; }
+.now-playing { margin: 5px 0; font-size: 22px; }
+.toggle-group { width: 100%; justify-content: space-around; font-size: 10px; }
 }
 
 .formula-box { font-size: 11px; color: #666; background: #eee; padding: 12px; border-radius: 4px; line-height: 1.5; border-left: 3px solid #ccc; }
-input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; }
+input[type="checkbox"] { transform: scale(1.2); cursor: pointer; }
 </style>
 
 </head>
@@ -98,6 +105,10 @@ input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; }
 <div class="sidebar-header">
 <h3>22 Shrutis</h3>
 <button id="mobile-toggle" onclick="toggleSettings()">SETTING ▾</button>
+</div>
+<!-- モバイルでも邪魔にならないようグラフを上部に配置 -->
+<div class="graph-container">
+<svg viewBox="-140 -140 280 280" id="graph"></svg>
 </div>
 <div class="sidebar-content" id="sidebar-content">
 <div class="input-grid">
@@ -126,36 +137,29 @@ input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; }
 </select>
 </div>
 </div>
-<div class="graph-container">
-<svg viewBox="-140 -140 280 280" id="graph"></svg>
-</div>
 </div>
 </div>
 
 <div class="content">
     <div class="card">
         <h4>出力表</h4>
-        <div class="table-wrapper">
-            <table>
-                <thead><tr><th>Play</th><th>Shruti</th><th>音名</th><th>Hz</th><th>Cent差(A440基)</th></tr></thead>
-                <tbody id="tbody"></tbody>
-            </table>
-        </div>
+        <table>
+            <thead><tr><th>Play</th><th>Shruti</th><th>音名</th><th>Hz</th><th>Cent差(A440基)</th></tr></thead>
+            <tbody id="tbody"></tbody>
+        </table>
     </div>
     <div class="card">
         <h4>比率参照表</h4>
-        <div class="table-wrapper">
-            <table>
-                <thead><tr><th>Shruti</th><th>比率</th><th>小数</th><th>算出Hz</th><th>平均律Hz</th><th>Cent差</th></tr></thead>
-                <tbody id="refTbody"></tbody>
-            </table>
-        </div>
+        <table>
+            <thead><tr><th>Shruti</th><th>比率</th><th>小数</th><th>算出Hz</th><th>平均律Hz</th><th>Cent差(A440基)</th></tr></thead>
+            <tbody id="refTbody"></tbody>
+        </table>
     </div>
     <div class="formula-box">
         Dr. Vidyadhar Okeの22shrutis理論に基づく<br>
         <strong>Cent差計算式 :</strong><br>
-        1200 × log₂(算出Hz / (A=440Hz)平均律Hz)<br>
-        <strong>理論は地図、実在は音。地図は美しく想像を生み、実在は師の音が導いてくれます。</strong>
+        1200 × log₂(算出Hz / (A=440Hz)平均律Hz)<br><br>
+        🪐理論は地図、実在は音。地図は美しく想像を生み、実在は師の音が導いてくれます。
     </div>
 </div>
 </div>
@@ -209,7 +213,7 @@ var shrutisMaData = [
 { n: "d2", num: 6, den: 5 }, { n: "D1", num: 5, den: 4 }, { n: "D2", num: 81, den: 64 },
 { n: "n1", num: 4, den: 3 }, { n: "n2", num: 27, den: 20 }, { n: "N1", num: 45, den: 32 },
 { n: "N2", num: 64, den: 45 }, { n: "S", num: 3, den: 2 }, { n: "r1", num: 128, den: 81 },
-{ n: "r2", num: 8, den: 5 }, { n: "R1", num: 5, den: 3 }, { n: "R2", num: 27, den: 16 },
+{ n: "r2", num: 8, den: 5 }, { n: "R1", num: 5, den: 3 }, { n: "R2", num: 27, her: 16, den: 16 },
 { n: "g1", num: 16, den: 9 }, { n: "g2", num: 9, den: 5 }, { n: "G1", num: 15, den: 8 },
 { n: "G2", num: 243, den: 128 }
 ];
@@ -226,7 +230,7 @@ var saIdx = parseInt(document.getElementById('saNote').value);
 var mode = document.getElementById('grama').value;
 var isTet = document.getElementById('tetMode').checked;
 
-var saHz = A * Math.pow(2, adj/1200) * Math.pow(2, (( (parseInt(document.getElementById('octave').value)+1)*12 + saIdx ) - 69) / 12);
+var saHz = A * Math.pow(2, adj/1200) * Math.pow(2, (((parseInt(document.getElementById('octave').value)+1)*12 + saIdx)-69)/12);
 var baseHz = (mode === "Ma") ? (saHz * 4/3) : saHz;
 var sourceData = (mode === "Ma") ? JSON.parse(JSON.stringify(shrutisMaData)) : JSON.parse(JSON.stringify(shrutisSaData));
 
@@ -236,7 +240,7 @@ while (hz < saHz - 0.01) hz *= 2;
 while (hz >= saHz * 2 - 0.01) hz /= 2;
 var cents = 1200 * log2(hz / saHz);
 var semitoneIdx = Math.round(cents/100);
-var stdHz = 440 * Math.pow(2, ( ( (parseInt(document.getElementById('octave').value)+1)*12 + saIdx + semitoneIdx ) - 69) / 12);
+var stdHz = 440 * Math.pow(2, (((parseInt(document.getElementById('octave').value)+1)*12 + saIdx + semitoneIdx)-69)/12);
 return { n: s.n, hz: hz, cents: cents, note: notes[(saIdx + semitoneIdx)%12], stdHz: stdHz, ratio: s.num/s.den, num: s.num, den: s.den, semitoneIdx: semitoneIdx, isBold: false };
 });
 currentResults.sort(function(a, b) { return a.cents - b.cents; });
@@ -268,11 +272,11 @@ html += '<tr id="row-'+idx+'" class="'+finalClass+'" data-base-class="'+baseClas
 
 var angle = (isTet ? s.semitoneIdx * 100 : s.cents) * 0.3 * Math.PI / 180;
 var px = 100 * Math.sin(angle), py = -100 * Math.cos(angle);
-var color = isSelected ? "var(--selected-line)" : (s.isBold ? "var(--accent)" : "#64748b");
-svgHtml += '<line x1="0" y1="0" x2="'+px+'" y2="'+py+'" stroke="'+color+'" stroke-width="'+(isSelected?2:(s.isBold?1.2:0.5))+'" opacity="'+(isSelected?1:0.6)+'" />';
-if(isSelected) svgHtml += '<circle cx="'+px+'" cy="'+py+'" r="7" fill="none" stroke="var(--selected-line)" stroke-width="1.5" />';
+var color = s.isBold ? "var(--accent)" : "#64748b";
+svgHtml += '<line id="line-'+idx+'" x1="0" y1="0" x2="'+px+'" y2="'+py+'" stroke="'+color+'" stroke-width="'+(s.isBold?1.2:0.5)+'" opacity="0.6" />';
+if(isSelected) svgHtml += '<circle cx="'+px+'" cy="'+py+'" r="7" fill="none" stroke="#3b82f6" stroke-width="1.5" />';
 svgHtml += '<circle id="dot-'+idx+'" cx="'+px+'" cy="'+py+'" r="'+(s.isBold?3.5:2)+'" fill="'+color+'"/>';
-svgHtml += '<text x="'+(122*Math.sin(angle))+'" y="'+(-122*Math.cos(angle))+'" fill="'+color+'" font-size="'+(s.isBold?11:8)+'" font-weight="'+(s.isBold?'bold':'normal')+'" text-anchor="middle" dominant-baseline="central">'+s.n+'</text>';
+svgHtml += '<text id="text-'+idx+'" x="'+(122*Math.sin(angle))+'" y="'+(-122*Math.cos(angle))+'" fill="'+color+'" font-size="'+(s.isBold?11:8)+'" font-weight="'+(s.isBold?'bold':'normal')+'" text-anchor="middle" dominant-baseline="central">'+s.n+'</text>';
 
 refHtml += '<tr class="'+finalClass+'"><td>'+s.n+'</td><td>'+s.num+'/'+s.den+'</td><td>'+s.ratio.toFixed(4)+'</td><td>'+s.hz.toFixed(2)+'</td><td>'+s.stdHz.toFixed(2)+'</td><td>'+centDiff.toFixed(1)+'</td></tr>';
 });
@@ -293,7 +297,8 @@ else {
 if(targetGroup) { for(var j=0; j<targetGroup.length; j++) { var pos = selectedIndices.indexOf(targetGroup[j]); if(pos !== -1) selectedIndices.splice(pos, 1); } }
 selectedIndices.push(idx);
 }
-selectedIndices.sort(function(a,b){return a-b;}); update();
+selectedIndices.sort(function(a,b){return a-b;});
+update();
 }
 
 function clearSelection() { selectedIndices = []; update(); }
@@ -321,7 +326,7 @@ droneOsc = audioCtx.createOscillator(); droneGain = audioCtx.createGain();
 var filter = audioCtx.createBiquadFilter();
 droneOsc.type = 'sawtooth'; droneOsc.frequency.value = f / 2;
 filter.type = 'lowpass'; filter.frequency.value = 300;
-droneGain.gain.value = 0.35;
+droneGain.gain.value = 0.35; // ボリューム3.5指定反映
 droneOsc.connect(filter); filter.connect(droneGain); droneGain.connect(audioCtx.destination);
 droneOsc.start();
 }
@@ -340,18 +345,23 @@ function highlight(idx) {
 var targetIdx = (idx === -99) ? 0 : idx;
 var isTet = document.getElementById('tetMode').checked;
 for(var i=0; i<currentResults.length; i++) {
-var r = document.getElementById('row-'+i), d = document.getElementById('dot-'+i);
+var r = document.getElementById('row-'+i), d = document.getElementById('dot-'+i), l = document.getElementById('line-'+i), t = document.getElementById('text-'+i);
 if(!r || !d) continue;
 var isSelected = (selectedIndices.indexOf(i) !== -1);
 r.className = (r.getAttribute('data-base-class') || "") + (isSelected ? "selected-row" : "");
 if(i === targetIdx && idx !== -1) {
-r.className += " playing-row"; d.setAttribute("r", "9"); d.setAttribute("fill", "#f59e0b");
+r.className += " playing-row";
+d.setAttribute("r", "10"); d.setAttribute("fill", "#f59e0b");
+if(l) { l.setAttribute("stroke", "#3b82f6"); l.setAttribute("opacity", "1"); } // シーケンス選択色(blue)
+if(t) t.setAttribute("fill", "#3b82f6");
 var label = (idx === -99) ? "S^" : currentResults[i].n;
-if(isTet && label !== "S^") label = label.replace(/[0-9]/g, '');
+if(isTet && label !== "S^") { label = label.replace(/[0-9]/g, ''); }
 document.getElementById('display').innerText = label;
 } else {
 d.setAttribute("r", currentResults[i].isBold ? "3.5" : "2");
-d.setAttribute("fill", isSelected ? "var(--selected-line)" : (currentResults[i].isBold ? "var(--accent)" : "#64748b"));
+d.setAttribute("fill", currentResults[i].isBold ? "var(--accent)" : "#64748b");
+if(l) { l.setAttribute("stroke", currentResults[i].isBold ? "var(--accent)" : "#64748b"); l.setAttribute("opacity", "0.6"); }
+if(t) t.setAttribute("fill", currentResults[i].isBold ? "var(--accent)" : "#64748b");
 }
 }
 if(idx === -1) document.getElementById('display').innerText = "--";
@@ -365,16 +375,11 @@ for(var i=selectedIndices.length-1; i>=0; i--) seq.push(selectedIndices[i]);
 var step = 0;
 function next() {
 if(step >= seq.length) { if(document.getElementById('loopOn').checked) { step = 0; } else { stopSequence(); return; } }
-var bpm = parseFloat(document.getElementById('bpm').value) || 80;
-var interval = 60000 / bpm, idx = seq[step], f;
+var interval = 60000 / (parseFloat(document.getElementById('bpm').value) || 80);
+var idx = seq[step], f;
 if(idx === -99) { f = currentResults[0].hz * 2; highlight(-99); }
-else {
-var s = currentResults[idx];
-f = document.getElementById('tetMode').checked ? currentResults[0].hz * Math.pow(2, s.semitoneIdx/12) : s.hz;
-highlight(idx);
-}
-playSound(f, interval/1000); step++;
-sequenceTimer = setTimeout(next, interval);
+else { f = document.getElementById('tetMode').checked ? currentResults[0].hz * Math.pow(2, currentResults[idx].semitoneIdx/12) : currentResults[idx].hz; highlight(idx); }
+playSound(f, interval/1000); step++; sequenceTimer = setTimeout(next, interval);
 }
 next();
 }
