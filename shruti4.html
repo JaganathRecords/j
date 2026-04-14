@@ -1,4 +1,4 @@
-<!-- 履歴: A...Q, R(Mobile Layout Fix, Settings Toggle for Mobile, Responsive Floating Bar, Viewport Logic) -->
+<!-- 履歴: A...Q, R(PC Gap Fix, Mobile Scroll Fix, Selection Color Sync, Graph inside Toggle, PWA Support) -->
 
 <!DOCTYPE html>
 
@@ -6,50 +6,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>22 Shrutis Calculator - Pro v6</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>22 Shrutis Calculator</title>
+<link rel="manifest" href="manifest.json">
 <style>
-:root { --primary: #2c3e50; --accent: #312e81; --bg: #f4f4f7; --card: #ffffff; --gray: #e2e8f0; --sidebar-w: 400px; --selected-bg: #e0f2fe; --playing-bg: #fef3c7; }
+:root { --primary: #2c3e50; --accent: #312e81; --bg: #f4f4f7; --card: #ffffff; --gray: #e2e8f0; --sidebar-w: 400px; --selected-bg: #e0f2fe; --selected-line: #3b82f6; --playing-bg: #fef3c7; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); color: var(--primary); font-size: 14px; overflow: hidden; -webkit-tap-highlight-color: transparent; }
 
 
-/* レイアウト構造 */
 .main-layout { display: flex; height: 100vh; width: 100%; box-sizing: border-box; }
 .sidebar { width: var(--sidebar-w); background: var(--card); border-right: 1px solid #ddd; display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
-.sidebar-header { padding: 12px 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+.sidebar-header { padding: 12px 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
 .sidebar-header h3 { margin: 0; font-size: 18px; letter-spacing: 0.5px; }
+
+/* PC用：設定項目の隙間を詰める */
 .sidebar-content { flex: none; padding: 10px 15px; display: flex; flex-direction: column; overflow-y: auto; }
 .content { flex: 1; padding: 20px 20px 120px 20px; overflow-y: auto; background: var(--bg); }
 
-/* モバイル向け折り畳みボタン（PCでは隠す） */
-#mobile-toggle { display: none; background: #4a5568; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+/* モバイル向け折り畳みボタン */
+#mobile-toggle { display: none; background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
 
 @media (max-width: 850px) {
 body { overflow: auto; }
 .main-layout { flex-direction: column; height: auto; }
 .sidebar { width: 100%; border-right: none; height: auto; position: sticky; top: 0; z-index: 2000; }
-.sidebar-content { display: none; padding: 10px; } /* 初期状態は非表示 */
+/* スマホ時：設定とグラフをひとまとめに隠す */
+.sidebar-content { display: none; padding: 10px; border-bottom: 1px solid #ddd; }
 .sidebar-content.active { display: flex; }
 #mobile-toggle { display: block; }
-
-/* スマホではグラフをコンテンツ側に移動させず、サイドバーの直後に配置 */
-.graph-container { min-height: 280px !important; margin: 10px 0; }
-.content { height: auto; overflow: visible; padding: 10px 10px 140px 10px; }
-
+.content { height: auto; overflow: visible; padding: 10px 10px 140px 10px; width: 100%; box-sizing: border-box; }
 }
 
-/* 入力項目 */
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
 .input-group { margin-bottom: 6px; }
 label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #666; }
 input, select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
 
-/* グラフ */
-.graph-container { flex: none; min-height: 320px; position: relative; margin-top: 0px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; }
+/* グラフ：PC時は隙間なし */
+.graph-container { flex: none; min-height: 320px; position: relative; margin-top: 0px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 svg { width: 98%; height: 98%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
 
-/* 表スタイル */
 .card { background: var(--card); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 15px; margin-bottom: 20px; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* 参照表の横揺れ防止 */
+.table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 450px; }
 th, td { border: 1px solid #eee; padding: 6px; text-align: center; }
 th { background: #f8fafc; position: sticky; top: -1px; z-index: 10; }
 
@@ -58,10 +59,10 @@ th { background: #f8fafc; position: sticky; top: -1px; z-index: 10; }
 .selected-row { background-color: var(--selected-bg) !important; }
 .playing-row { background-color: var(--playing-bg) !important; outline: 2px solid #f59e0b !important; z-index: 5; }
 
-/* 操作バー (履歴Qの35%透明度 + レスポンシブ) */
+/* 操作バー: 透明度35% & スマホ最適化 */
 .floating-bar {
 position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-width: 95%; max-width: 650px; height: 64px;
+width: 95%; max-width: 700px; height: 64px;
 background: rgba(15, 23, 42, 0.35); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 border-radius: 32px; display: flex; align-items: center; padding: 0 15px;
 z-index: 3000; justify-content: space-between;
@@ -69,24 +70,24 @@ box-shadow: 0 8px 32px rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255
 box-sizing: border-box;
 }
 .play-btns { display: flex; gap: 4px; flex-shrink: 0; }
-.btn { padding: 8px 12px; border: none; border-radius: 18px; font-weight: bold; cursor: pointer; color: white; font-size: 11px; text-transform: uppercase; white-space: nowrap; }
+.btn { padding: 8px 10px; border: none; border-radius: 18px; font-weight: bold; cursor: pointer; color: white; font-size: 10px; text-transform: uppercase; white-space: nowrap; }
 .btn-play { background: #10b981; }
 .btn-stop { background: #ef4444; }
 .btn-clear { background: rgba(255,255,255,0.2); }
 
-.now-playing { font-size: 24px; font-weight: bold; color: #fbbf24; min-width: 50px; text-align: center; font-family: 'Georgia', serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5); flex: 1; }
-.toggle-group { display: flex; gap: 8px; font-size: 8px; font-weight: bold; color: #cbd5e1; flex-shrink: 0; }
+.now-playing { font-size: 24px; font-weight: bold; color: #fbbf24; min-width: 40px; text-align: center; font-family: 'Georgia', serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5); flex: 1; }
+.toggle-group { display: flex; gap: 6px; font-size: 8px; font-weight: bold; color: #cbd5e1; flex-shrink: 0; }
 .toggle-item { display: flex; align-items: center; gap: 2px; }
 
 @media (max-width: 480px) {
-.floating-bar { height: 56px; padding: 0 10px; bottom: 10px; }
-.btn { padding: 6px 8px; font-size: 10px; }
+.floating-bar { height: 56px; padding: 0 10px; bottom: 10px; border-radius: 28px; }
+.btn { padding: 6px 8px; font-size: 9px; }
 .now-playing { font-size: 20px; }
 .toggle-group { gap: 4px; }
 }
 
 .formula-box { font-size: 11px; color: #666; background: #eee; padding: 12px; border-radius: 4px; line-height: 1.5; border-left: 3px solid #ccc; }
-input[type="checkbox"] { transform: scale(1.1); cursor: pointer; }
+input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; }
 </style>
 
 </head>
@@ -125,32 +126,36 @@ input[type="checkbox"] { transform: scale(1.1); cursor: pointer; }
 </select>
 </div>
 </div>
-</div>
-<!-- グラフはスマホでも常に見える位置に配置 -->
 <div class="graph-container">
 <svg viewBox="-140 -140 280 280" id="graph"></svg>
+</div>
 </div>
 </div>
 
 <div class="content">
     <div class="card">
         <h4>出力表</h4>
-        <table>
-            <thead><tr><th>Play</th><th>Shruti</th><th>音名</th><th>Hz</th><th>Cent差(A440基)</th></tr></thead>
-            <tbody id="tbody"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Play</th><th>Shruti</th><th>音名</th><th>Hz</th><th>Cent差(A440基)</th></tr></thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
     </div>
     <div class="card">
         <h4>比率参照表</h4>
-        <table style="font-size: 11px;">
-            <thead><tr><th>Shruti</th><th>比率</th><th>小数</th><th>算出Hz</th><th>平均律Hz</th><th>Cent差(A440基)</th></tr></thead>
-            <tbody id="refTbody"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Shruti</th><th>比率</th><th>小数</th><th>算出Hz</th><th>平均律Hz</th><th>Cent差</th></tr></thead>
+                <tbody id="refTbody"></tbody>
+            </table>
+        </div>
     </div>
     <div class="formula-box">
         Dr. Vidyadhar Okeの22shrutis理論に基づく<br>
         <strong>Cent差計算式 :</strong><br>
-        1200 × log₂(算出Hz / (A=440Hz)平均律Hz)
+        1200 × log₂(算出Hz / (A=440Hz)平均律Hz)<br>
+        <strong>理論は地図、実在は音。地図は美しく想像を生み、実在は師の音が導いてくれます。</strong>
     </div>
 </div>
 </div>
@@ -180,11 +185,9 @@ function toggleSettings() {
 var content = document.getElementById('sidebar-content');
 var btn = document.getElementById('mobile-toggle');
 if (content.className.indexOf('active') === -1) {
-content.className += ' active';
-btn.innerText = 'SETTING ▴';
+content.className += ' active'; btn.innerText = 'SETTING ▴';
 } else {
-content.className = content.className.replace(' active', '');
-btn.innerText = 'SETTING ▾';
+content.className = content.className.replace(' active', ''); btn.innerText = 'SETTING ▾';
 }
 }
 
@@ -243,7 +246,6 @@ if (mode === "Ma") {
 currentResults[9].n = "M"; currentResults[10].n = "m1"; currentResults[11].n = "m2"; currentResults[12].n = "P1"; currentResults[13].n = "P2";
 }
 for(var k=0; k<boldSet.length; k++) { currentResults[boldSet[k]].isBold = true; }
-
 render(saIdx, isTet);
 }
 
@@ -266,9 +268,9 @@ html += '<tr id="row-'+idx+'" class="'+finalClass+'" data-base-class="'+baseClas
 
 var angle = (isTet ? s.semitoneIdx * 100 : s.cents) * 0.3 * Math.PI / 180;
 var px = 100 * Math.sin(angle), py = -100 * Math.cos(angle);
-var color = s.isBold ? "var(--accent)" : "#64748b";
-svgHtml += '<line x1="0" y1="0" x2="'+px+'" y2="'+py+'" stroke="'+color+'" stroke-width="'+(s.isBold?1.2:0.5)+'" opacity="0.6" />';
-if(isSelected) svgHtml += '<circle cx="'+px+'" cy="'+py+'" r="7" fill="none" stroke="#3b82f6" stroke-width="1.5" />';
+var color = isSelected ? "var(--selected-line)" : (s.isBold ? "var(--accent)" : "#64748b");
+svgHtml += '<line x1="0" y1="0" x2="'+px+'" y2="'+py+'" stroke="'+color+'" stroke-width="'+(isSelected?2:(s.isBold?1.2:0.5))+'" opacity="'+(isSelected?1:0.6)+'" />';
+if(isSelected) svgHtml += '<circle cx="'+px+'" cy="'+py+'" r="7" fill="none" stroke="var(--selected-line)" stroke-width="1.5" />';
 svgHtml += '<circle id="dot-'+idx+'" cx="'+px+'" cy="'+py+'" r="'+(s.isBold?3.5:2)+'" fill="'+color+'"/>';
 svgHtml += '<text x="'+(122*Math.sin(angle))+'" y="'+(-122*Math.cos(angle))+'" fill="'+color+'" font-size="'+(s.isBold?11:8)+'" font-weight="'+(s.isBold?'bold':'normal')+'" text-anchor="middle" dominant-baseline="central">'+s.n+'</text>';
 
@@ -282,26 +284,16 @@ document.getElementById('graph').innerHTML = svgHtml + '<circle cx="0" cy="0" r=
 function toggleSelect(idx) {
 initAudio();
 var mode = document.getElementById('grama').value;
-var groups = (mode === "Ma") ?
-[[0],[1,2],[3,4],[5,6],[7,8],[9],[10,11],[12,13],[14,15],[16,17],[18,19],[20,21]] :
-[[0],[1,2],[3,4],[5,6],[7,8],[9,10],[11,12],[13],[14,15],[16,17],[18,19],[20,21]];
+var groups = (mode === "Ma") ? [[0],[1,2],[3,4],[5,6],[7,8],[9],[10,11],[12,13],[14,15],[16,17],[18,19],[20,21]] : [[0],[1,2],[3,4],[5,6],[7,8],[9,10],[11,12],[13],[14,15],[16,17],[18,19],[20,21]];
 var targetGroup = null;
 for(var i=0; i<groups.length; i++) { if(groups[i].indexOf(idx) !== -1) { targetGroup = groups[i]; break; } }
-
 var existingIdx = selectedIndices.indexOf(idx);
-if(existingIdx !== -1) {
-selectedIndices.splice(existingIdx, 1);
-} else {
-if(targetGroup) {
-for(var j=0; j<targetGroup.length; j++) {
-var pos = selectedIndices.indexOf(targetGroup[j]);
-if(pos !== -1) selectedIndices.splice(pos, 1);
-}
-}
+if(existingIdx !== -1) { selectedIndices.splice(existingIdx, 1); }
+else {
+if(targetGroup) { for(var j=0; j<targetGroup.length; j++) { var pos = selectedIndices.indexOf(targetGroup[j]); if(pos !== -1) selectedIndices.splice(pos, 1); } }
 selectedIndices.push(idx);
 }
-selectedIndices.sort(function(a,b){return a-b;});
-update();
+selectedIndices.sort(function(a,b){return a-b;}); update();
 }
 
 function clearSelection() { selectedIndices = []; update(); }
@@ -310,8 +302,7 @@ function playSound(freq, duration) {
 if (!audioCtx) return;
 if (activeOsc) { try { activeOsc.stop(); } catch(e){} }
 var osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-osc.type = 'triangle';
-osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 g.gain.setValueAtTime(0, audioCtx.currentTime);
 g.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.05);
 g.gain.setValueAtTime(0.4, audioCtx.currentTime + duration - 0.1);
@@ -330,7 +321,7 @@ droneOsc = audioCtx.createOscillator(); droneGain = audioCtx.createGain();
 var filter = audioCtx.createBiquadFilter();
 droneOsc.type = 'sawtooth'; droneOsc.frequency.value = f / 2;
 filter.type = 'lowpass'; filter.frequency.value = 300;
-droneGain.gain.value = 0.12;
+droneGain.gain.value = 0.35;
 droneOsc.connect(filter); filter.connect(droneGain); droneGain.connect(audioCtx.destination);
 droneOsc.start();
 }
@@ -341,8 +332,7 @@ function playSingle(idx) {
 initAudio();
 var s = currentResults[idx];
 var f = document.getElementById('tetMode').checked ? currentResults[0].hz * Math.pow(2, s.semitoneIdx/12) : s.hz;
-playSound(f, 1.0);
-highlight(idx);
+playSound(f, 1.0); highlight(idx);
 setTimeout(function(){ highlight(-1); }, 1000);
 }
 
@@ -353,18 +343,15 @@ for(var i=0; i<currentResults.length; i++) {
 var r = document.getElementById('row-'+i), d = document.getElementById('dot-'+i);
 if(!r || !d) continue;
 var isSelected = (selectedIndices.indexOf(i) !== -1);
-var baseClass = r.getAttribute('data-base-class') || "";
-r.className = baseClass + (isSelected ? "selected-row" : "");
+r.className = (r.getAttribute('data-base-class') || "") + (isSelected ? "selected-row" : "");
 if(i === targetIdx && idx !== -1) {
-r.className += " playing-row";
-d.setAttribute("r", "9");
-d.setAttribute("fill", "#f59e0b");
+r.className += " playing-row"; d.setAttribute("r", "9"); d.setAttribute("fill", "#f59e0b");
 var label = (idx === -99) ? "S^" : currentResults[i].n;
-if(isTet && label !== "S^") { label = label.replace(/[0-9]/g, ''); }
+if(isTet && label !== "S^") label = label.replace(/[0-9]/g, '');
 document.getElementById('display').innerText = label;
 } else {
 d.setAttribute("r", currentResults[i].isBold ? "3.5" : "2");
-d.setAttribute("fill", currentResults[i].isBold ? "var(--accent)" : "#64748b");
+d.setAttribute("fill", isSelected ? "var(--selected-line)" : (currentResults[i].isBold ? "var(--accent)" : "#64748b"));
 }
 }
 if(idx === -1) document.getElementById('display').innerText = "--";
@@ -373,26 +360,20 @@ if(idx === -1) document.getElementById('display').innerText = "--";
 function startSequence() {
 initAudio(); if(selectedIndices.length === 0) return;
 stopSequence(); startDrone();
-var seq = [].concat(selectedIndices);
-seq.push(-99); seq.push(-99);
+var seq = [].concat(selectedIndices); seq.push(-99); seq.push(-99);
 for(var i=selectedIndices.length-1; i>=0; i--) seq.push(selectedIndices[i]);
 var step = 0;
 function next() {
-var loopOn = document.getElementById('loopOn').checked;
-if(step >= seq.length) {
-if(loopOn) { step = 0; } else { stopSequence(); return; }
-}
+if(step >= seq.length) { if(document.getElementById('loopOn').checked) { step = 0; } else { stopSequence(); return; } }
 var bpm = parseFloat(document.getElementById('bpm').value) || 80;
-var interval = 60000 / bpm;
-var idx = seq[step], f;
+var interval = 60000 / bpm, idx = seq[step], f;
 if(idx === -99) { f = currentResults[0].hz * 2; highlight(-99); }
 else {
 var s = currentResults[idx];
 f = document.getElementById('tetMode').checked ? currentResults[0].hz * Math.pow(2, s.semitoneIdx/12) : s.hz;
 highlight(idx);
 }
-playSound(f, interval/1000);
-step++;
+playSound(f, interval/1000); step++;
 sequenceTimer = setTimeout(next, interval);
 }
 next();
